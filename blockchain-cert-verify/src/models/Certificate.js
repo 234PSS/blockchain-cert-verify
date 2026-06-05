@@ -45,6 +45,21 @@ module.exports = (sequelize) => {
     },
     revoked_reason: {
       type: DataTypes.TEXT
+    },
+    document_path: {
+      type: DataTypes.STRING(255)
+    },
+    document_original_name: {
+      type: DataTypes.STRING(255)
+    },
+    document_mime_type: {
+      type: DataTypes.STRING(100)
+    },
+    document_hash: {
+      type: DataTypes.STRING(64)
+    },
+    qr_code_path: {
+      type: DataTypes.STRING(255)
     }
   }, {
     timestamps: true,

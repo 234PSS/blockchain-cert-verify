@@ -1,0 +1,7 @@
+{
+  "contractName": "CertificateRegistry",
+  "address": "0xYourDeployedContractAddress",
+  "network": "development",
+  "deployer": "0xYourGanacheAccount",
+  "deployedAt": "2024-01-01T00:00:00.000Z"
+}
