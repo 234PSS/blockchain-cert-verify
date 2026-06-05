@@ -1,3 +1,5 @@
+const AppError = require('../utils/AppError');
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const WALLET_REGEX = /^0x[a-fA-F0-9]{40}$/;
 const VALID_ROLES = ['student', 'university_staff'];
