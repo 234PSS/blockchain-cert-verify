@@ -6,14 +6,14 @@ module.exports = {
       host: '127.0.0.1',
       port: 7545,
       network_id: '*',
-      gas: 6_721_975,
+      gas: 50_000_000,
       gasPrice: 20_000_000_000
     },
     ganache: {
       host: '127.0.0.1',
       port: 8545,
       network_id: '*',
-      gas: 6_721_975,
+      gas: 50_000_000,
       gasPrice: 20_000_000_000
     }
   },
@@ -21,6 +21,7 @@ module.exports = {
     solc: {
       version: '0.8.19',
       settings: {
+        viaIR: true,
         optimizer: {
           enabled: true,
           runs: 200

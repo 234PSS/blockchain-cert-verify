@@ -5,9 +5,22 @@ const { authenticate, authorize } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
 const asyncHandler = require('../utils/asyncHandler');
 const { parseId } = require('../validators/rules');
-const { issueSchema, revokeSchema } = require('../validators/certificateValidators');
+const {
+  issueSchema,
+  revokeSchema,
+  batchIssueSchema,
+  batchRevokeSchema,
+  merkleRootSchema,
+  merkleProofSchema,
+  registerIssuerSchema,
+  privacyCommitmentSchema,
+  privacyBuildTreeSchema,
+  privacyVerifySchema,
+  nullifierSchema
+} = require('../validators/certificateValidators');
 const { uploadCertificateDocument } = require('../middleware/uploadMiddleware');
 
+// ---- Single certificate operations ----
 router.post(
   '/issue',
   authenticate,
@@ -52,6 +65,159 @@ router.get(
   authenticate,
   authorize('admin'),
   asyncHandler(certificateController.listAllCertificates)
+);
+
+// ---- Batch operations ----
+router.post(
+  '/batch/issue',
+  authenticate,
+  authorize('university_staff', 'admin'),
+  validate(batchIssueSchema),
+  asyncHandler(certificateController.issueCertificatesBatch)
+);
+
+router.post(
+  '/batch/revoke',
+  authenticate,
+  authorize('admin', 'university_staff'),
+  validate(batchRevokeSchema),
+  asyncHandler(certificateController.revokeCertificatesBatch)
+);
+
+// ---- Merkle tree operations ----
+router.post(
+  '/merkle/root',
+  authenticate,
+  authorize('university_staff', 'admin'),
+  validate(merkleRootSchema),
+  asyncHandler(certificateController.updateMerkleRoot)
+);
+
+router.post(
+  '/merkle/verify',
+  authenticate,
+  authorize('admin', 'university_staff', 'student'),
+  validate(merkleProofSchema),
+  asyncHandler(certificateController.verifyMerkleProof)
+);
+
+router.get(
+  '/merkle/root/:issuerAddress',
+  authenticate,
+  authorize('admin', 'university_staff'),
+  asyncHandler(certificateController.getIssuerMerkleRoot)
+);
+
+// ---- Multi-tenant issuer management ----
+router.post(
+  '/issuer/register',
+  authenticate,
+  authorize('university_staff', 'admin'),
+  validate(registerIssuerSchema),
+  asyncHandler(certificateController.registerIssuer)
+);
+
+router.get(
+  '/issuers',
+  authenticate,
+  authorize('admin', 'university_staff'),
+  asyncHandler(certificateController.getIssuers)
+);
+
+router.get(
+  '/issuer/:walletAddress',
+  authenticate,
+  authorize('admin', 'university_staff'),
+  asyncHandler(certificateController.getIssuer)
+);
+
+router.put(
+  '/issuer/status',
+  authenticate,
+  authorize('admin'),
+  asyncHandler(certificateController.updateIssuerStatus)
+);
+
+// ---- Circuit breaker (pause/unpause) ----
+router.post(
+  '/admin/pause',
+  authenticate,
+  authorize('admin'),
+  asyncHandler(certificateController.pauseContract)
+);
+
+router.post(
+  '/admin/unpause',
+  authenticate,
+  authorize('admin'),
+  asyncHandler(certificateController.unpauseContract)
+);
+
+router.get(
+  '/admin/status',
+  authenticate,
+  authorize('admin'),
+  asyncHandler(certificateController.getContractStatus)
+);
+
+// ---- Privacy-preserving verification ----
+router.post(
+  '/privacy/commitment',
+  authenticate,
+  authorize('admin', 'university_staff'),
+  validate(privacyCommitmentSchema),
+  asyncHandler(certificateController.generateSaltedCommitment)
+);
+
+router.post(
+  '/privacy/build-tree',
+  authenticate,
+  authorize('admin', 'university_staff'),
+  validate(privacyBuildTreeSchema),
+  asyncHandler(certificateController.buildCertificateTree)
+);
+
+router.post(
+  '/privacy/verify',
+  authenticate,
+  validate(privacyVerifySchema),
+  asyncHandler(certificateController.verifyPrivacyProof)
+);
+
+router.post(
+  '/privacy/verify-onchain',
+  authenticate,
+  authorize('admin', 'university_staff', 'student'),
+  validate(merkleProofSchema),
+  asyncHandler(certificateController.verifyPrivacyProofOnChain)
+);
+
+router.post(
+  '/privacy/nullifier',
+  authenticate,
+  authorize('admin', 'university_staff'),
+  validate(nullifierSchema),
+  asyncHandler(certificateController.consumNullifier)
+);
+
+router.post(
+  '/privacy/verify-nullifier',
+  authenticate,
+  authorize('admin', 'university_staff', 'student'),
+  asyncHandler(certificateController.verifyWithNullifier)
+);
+
+router.post(
+  '/privacy/selective-disclose',
+  authenticate,
+  authorize('student', 'university_staff'),
+  asyncHandler(certificateController.generateSelectiveDisclosure)
+);
+
+router.post(
+  '/privacy/verify-disclosure',
+  authenticate,
+  asyncHandler(certificateController.verifySelectiveDisclosure)
 );
 
 module.exports = router;
