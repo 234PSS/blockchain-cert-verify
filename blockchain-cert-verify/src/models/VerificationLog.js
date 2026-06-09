@@ -27,8 +27,9 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT
     }
   }, {
-    timestamps: false,
-    createdAt: 'verification_timestamp'
+    timestamps: true,
+    createdAt: 'verification_timestamp',
+    updatedAt: false
   });
 
   VerificationLog.associate = (models) => {

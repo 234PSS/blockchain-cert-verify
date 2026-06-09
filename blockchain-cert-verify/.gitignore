@@ -1,6 +1,11 @@
 node_modules/
+client/node_modules/
+client/dist/
 .env
 build/
 artifacts/
+src/config/contract.deployment.json
+uploads/*
+!uploads/.gitkeep
 *.log
 .DS_Store

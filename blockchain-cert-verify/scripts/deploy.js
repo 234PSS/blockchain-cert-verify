@@ -1,15 +1,13 @@
-const hre = require("hardhat");
-
-async function main() {
-  const CertificateRegistry = await hre.ethers.getContractFactory("CertificateRegistry");
-  const certificateRegistry = await CertificateRegistry.deploy();
-
-  await certificateRegistry.waitForDeployment();
-
-  console.log("CertificateRegistry deployed to:", certificateRegistry.target);
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+/**
+ * Contract deployment is handled by Truffle migrations.
+ *
+ * 1. Start Ganache on port 7545 (or 8545 with --network ganache)
+ * 2. npm run compile
+ * 3. npm run migrate
+ *
+ * Deployment output is written to:
+ *   - src/config/contract.deployment.json
+ *   - src/config/CertificateRegistry.json
+ */
+console.log('Run: npm run compile && npm run migrate');
+console.log('Ensure Ganache is running before migrating.');

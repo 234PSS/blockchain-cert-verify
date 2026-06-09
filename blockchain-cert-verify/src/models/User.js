@@ -36,7 +36,6 @@ module.exports = (sequelize) => {
 
   User.associate = (models) => {
     User.hasOne(models.Student, { foreignKey: 'user_id' });
-    User.hasMany(models.ApiKey, { foreignKey: 'user_id' });
   };
 
   return User;

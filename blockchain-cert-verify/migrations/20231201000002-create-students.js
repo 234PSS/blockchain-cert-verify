@@ -13,6 +13,14 @@ module.exports = {
       created_at: { type: Sequelize.DATE, allowNull: false },
       updated_at: { type: Sequelize.DATE, allowNull: false }
     });
+
+    await queryInterface.addConstraint('Students', {
+      fields: ['user_id'],
+      type: 'foreign key',
+      name: 'students_user_fk',
+      references: { table: 'Users', field: 'user_id' },
+      onDelete: 'CASCADE'
+    });
   },
   down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('Students');

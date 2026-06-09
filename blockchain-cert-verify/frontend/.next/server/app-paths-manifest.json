@@ -1,0 +1,14 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/(marketing)/page": "app/(marketing)/page.js",
+  "/(platform)/explorer/page": "app/(platform)/explorer/page.js",
+  "/(platform)/analytics/page": "app/(platform)/analytics/page.js",
+  "/(platform)/issue/page": "app/(platform)/issue/page.js",
+  "/(platform)/dashboard/page": "app/(platform)/dashboard/page.js",
+  "/(platform)/privacy/page": "app/(platform)/privacy/page.js",
+  "/(platform)/issuer/page": "app/(platform)/issuer/page.js",
+  "/(platform)/organizations/page": "app/(platform)/organizations/page.js",
+  "/(platform)/settings/page": "app/(platform)/settings/page.js",
+  "/(platform)/verify/[certificateId]/page": "app/(platform)/verify/[certificateId]/page.js",
+  "/(platform)/verify/page": "app/(platform)/verify/page.js"
+}

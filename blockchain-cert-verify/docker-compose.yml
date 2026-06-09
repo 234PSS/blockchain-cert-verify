@@ -1,0 +1,93 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: cert-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: certificate_db
+      MYSQL_USER: certuser
+      MYSQL_PASSWORD: certpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "certuser", "-pcertpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ganache:
+    image: trufflesuite/ganache:latest
+    container_name: cert-ganache
+    restart: unless-stopped
+    ports:
+      - "7545:7545"
+    command:
+      - --port
+      - "7545"
+      - --networkId
+      - "5777"
+      - --deterministic
+      - --wallet.deterministic
+      - --chain.chainId
+      - "1337"
+      - --miner.blockGasLimit
+      - "100000000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-X", "POST", "-H", "Content-Type: application/json", "-d", '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}', "http://localhost:7545"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: cert-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: certificate_db
+      DB_USER: certuser
+      DB_PASSWORD: certpass
+      JWT_SECRET: ${JWT_SECRET:-prod_jwt_secret_change_in_production_32chars}
+      JWT_EXPIRES_IN: 24h
+      GANACHE_URL: http://ganache:7545
+      PRIVATE_KEY: ${PRIVATE_KEY:-0x2509664827521dc1a402470eab7737d3bef0ea94ee7108b470d32b4fc030cf26}
+      CONTRACT_ADDRESS: ""
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ganache:
+        condition: service_healthy
+    volumes:
+      - backend-uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cert-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:
+  backend-uploads:

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 contract CertificateRegistry {
@@ -14,7 +15,6 @@ contract CertificateRegistry {
 
     mapping(bytes32 => Certificate) private certificates;
     mapping(address => bool) private authorizedUniversities;
-    mapping(uint256 => bytes32[]) private studentCertificates;
 
     event CertificateIssued(bytes32 indexed certificateId, string studentId, address issuer);
     event CertificateRevoked(bytes32 indexed certificateId, address revoker);
@@ -38,6 +38,7 @@ contract CertificateRegistry {
     }
 
     function authorizeUniversity(address university, bool authorized) external onlyOwner {
+    function authorizeUniversity(address university, bool authorized) external onlyAuthorized {
         authorizedUniversities[university] = authorized;
         emit UniversityAuthorized(university, authorized);
     }
@@ -52,7 +53,8 @@ contract CertificateRegistry {
         string memory _certificateHash
     ) external onlyAuthorized returns (bytes32) {
         bytes32 certificateId = keccak256(abi.encodePacked(_studentId, _courseId, _graduationDate));
-        
+        require(!certificates[certificateId].exists, "Certificate already exists");
+
         certificates[certificateId] = Certificate({
             studentName: _studentName,
             studentId: _studentId,
@@ -74,7 +76,11 @@ contract CertificateRegistry {
         emit CertificateRevoked(certificateId, msg.sender);
     }
 
-    function verifyCertificate(bytes32 certificateId) external view returns (bool, string memory, string memory) {
+    function verifyCertificate(bytes32 certificateId)
+        external
+        view
+        returns (bool valid, string memory certificateHash, string memory institution)
+    {
         Certificate memory cert = certificates[certificateId];
         if (!cert.exists) {
             return (false, "", "");
@@ -82,7 +88,13 @@ contract CertificateRegistry {
         return (true, cert.certificateHash, cert.institution);
     }
 
-    function getCertificate(bytes32 certificateId) external view onlyAuthorized returns (Certificate memory) {
+    function getCertificate(bytes32 certificateId)
+        external
+        view
+        onlyAuthorized
+        returns (Certificate memory)
+    {
+        require(certificates[certificateId].exists, "Certificate does not exist");
         return certificates[certificateId];
     }
 
