@@ -8,7 +8,7 @@ module.exports = (sequelize) => {
       autoIncrement: true
     },
     certificate_id: {
-      type: DataTypes.INTEGER
+      type: DataTypes.UUID
     },
     verifier_wallet_address: {
       type: DataTypes.STRING(42)

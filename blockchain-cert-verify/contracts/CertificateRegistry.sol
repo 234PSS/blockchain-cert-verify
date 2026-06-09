@@ -20,7 +20,15 @@ contract CertificateRegistry {
     event CertificateRevoked(bytes32 indexed certificateId, address revoker);
     event UniversityAuthorized(address university, bool authorized);
 
+    address private owner;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Caller is not the owner");
+        _;
+    }
+
     constructor() {
+        owner = msg.sender;
         authorizedUniversities[msg.sender] = true;
     }
 
@@ -29,7 +37,7 @@ contract CertificateRegistry {
         _;
     }
 
-    function authorizeUniversity(address university, bool authorized) external {
+    function authorizeUniversity(address university, bool authorized) external onlyOwner {
         authorizedUniversities[university] = authorized;
         emit UniversityAuthorized(university, authorized);
     }

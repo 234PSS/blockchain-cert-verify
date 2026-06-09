@@ -3,12 +3,12 @@ module.exports = (sequelize) => {
   
   const Student = sequelize.define('Student', {
     student_id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
     },
     user_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       unique: true
     },
     student_number: {

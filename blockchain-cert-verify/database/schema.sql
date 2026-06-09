@@ -1,6 +1,6 @@
 -- Users Table: Base user accounts for all roles (admin, university_staff, student)
 CREATE TABLE users (
-    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -25,8 +25,8 @@ CREATE TABLE institutions (
 
 -- Students Table: Student-specific information
 CREATE TABLE students (
-    student_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT UNIQUE,
+    student_id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) UNIQUE,
     student_number VARCHAR(50) UNIQUE NOT NULL,
     enrollment_date DATE NOT NULL,
     graduation_date DATE,
@@ -50,8 +50,8 @@ CREATE TABLE courses (
 
 -- Certificates Table: Academic certificates with blockchain references
 CREATE TABLE certificates (
-    certificate_id INT PRIMARY KEY AUTO_INCREMENT,
-    student_id INT NOT NULL,
+    certificate_id VARCHAR(36) PRIMARY KEY,
+    student_id VARCHAR(36) NOT NULL,
     course_id INT NOT NULL,
     institution_id INT NOT NULL,
     issue_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -74,7 +74,7 @@ CREATE TABLE certificates (
 -- Verification Logs Table: Record of all certificate verification attempts
 CREATE TABLE verification_logs (
     log_id INT PRIMARY KEY AUTO_INCREMENT,
-    certificate_id INT,
+    certificate_id VARCHAR(36),
     verifier_wallet_address VARCHAR(42),
     verifier_ip VARCHAR(45),
     verification_status ENUM('valid', 'invalid', 'revoked', 'not_found') NOT NULL,
@@ -101,7 +101,7 @@ CREATE TABLE blockchain_transactions (
 -- API Keys Table: For external system access
 CREATE TABLE api_keys (
     key_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
+    user_id VARCHAR(36),
     api_key VARCHAR(64) UNIQUE NOT NULL,
     key_name VARCHAR(100),
     is_active BOOLEAN DEFAULT TRUE,

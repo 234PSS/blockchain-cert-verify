@@ -6,6 +6,7 @@ const Student = require('./Student');
 const Course = require('./Course');
 const VerificationLog = require('./VerificationLog');
 const BlockchainTransaction = require('./BlockchainTransaction');
+const ApiKey = require('./ApiKey');
 
 const models = {
   User: User(sequelize),
@@ -14,7 +15,8 @@ const models = {
   Student: Student(sequelize),
   Course: Course(sequelize),
   VerificationLog: VerificationLog(sequelize),
-  BlockchainTransaction: BlockchainTransaction(sequelize)
+  BlockchainTransaction: BlockchainTransaction(sequelize),
+  ApiKey: ApiKey(sequelize)
 };
 
 Object.keys(models).forEach(key => {

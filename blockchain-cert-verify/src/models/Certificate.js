@@ -3,12 +3,12 @@ module.exports = (sequelize) => {
   
   const Certificate = sequelize.define('Certificate', {
     certificate_id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true
     },
     student_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false
     },
     course_id: {

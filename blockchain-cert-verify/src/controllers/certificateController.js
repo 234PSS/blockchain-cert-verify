@@ -1,4 +1,4 @@
-const { Certificate, Student, Course, Institution, VerificationLog } = require('../models');
+const { Certificate, Student, Course, Institution, VerificationLog, User } = require('../models');
 const blockchainService = require('../services/blockchainService');
 const CryptoJS = require('crypto-js');
 
@@ -8,9 +8,22 @@ const generateCertificateHash = (data) => {
 
 exports.issueCertificate = async (req, res) => {
   try {
-    const { studentId, courseId, institutionId, grade, remarks } = req.body;
+    const { studentId, courseId, grade, remarks } = req.body;
     
-    const student = await Student.findByPk(studentId);
+    const staffUser = await User.findByPk(req.user.id);
+    if (!staffUser || !staffUser.wallet_address) {
+      return res.status(403).json({ success: false, message: 'User is not associated with a wallet address' });
+    }
+
+    const institution = await Institution.findOne({ where: { wallet_address: staffUser.wallet_address } });
+    if (!institution) {
+      return res.status(403).json({ success: false, message: 'Staff wallet address is not associated with a registered institution' });
+    }
+    if (!institution.is_verified) {
+      return res.status(403).json({ success: false, message: 'Institution is not verified by admin' });
+    }
+
+    const student = await Student.findByPk(studentId, { include: [User] });
     const course = await Course.findByPk(courseId);
     
     if (!student || !course) {
@@ -20,8 +33,8 @@ exports.issueCertificate = async (req, res) => {
     const certificateData = {
       student_id: studentId,
       course_id: courseId,
-      institution_id: institutionId,
-      certificate_hash: generateCertificateHash({ studentId, courseId, institutionId }),
+      institution_id: institution.institution_id,
+      certificate_hash: generateCertificateHash({ studentId, courseId, institutionId: institution.institution_id }),
       grade,
       remarks
     };
@@ -33,7 +46,7 @@ exports.issueCertificate = async (req, res) => {
       studentId: student.student_number,
       courseName: course.course_name,
       courseId: course.course_code,
-      institution: (await Institution.findByPk(institutionId))?.name || 'Unknown',
+      institution: institution.name,
       graduationDate: student.graduation_date || new Date(),
       certificateHash: certificate.certificate_hash
     });
@@ -58,9 +71,25 @@ exports.verifyCertificate = async (req, res) => {
   try {
     const { certificateId } = req.params;
     
-    const certificate = await Certificate.findByPk(certificateId, {
-      include: [Student, Course, Institution]
-    });
+    let certificate;
+    if (certificateId.length === 66) {
+      certificate = await Certificate.findOne({
+        where: { certificate_hash: certificateId },
+        include: [
+          { model: Student, include: [User] },
+          Course,
+          Institution
+        ]
+      });
+    } else {
+      certificate = await Certificate.findByPk(certificateId, {
+        include: [
+          { model: Student, include: [User] },
+          Course,
+          Institution
+        ]
+      });
+    }
     
     if (!certificate) {
       return res.status(404).json({ success: false, message: 'Certificate not found' });
@@ -68,9 +97,16 @@ exports.verifyCertificate = async (req, res) => {
 
     const [exists, hash, inst] = await blockchainService.verifyCertificate(certificate.blockchain_certificate_id);
     
+    let status = 'valid';
+    if (!exists) {
+      status = 'not_found';
+    } else if (certificate.is_revoked) {
+      status = 'revoked';
+    }
+
     await VerificationLog.create({
       certificate_id: certificate.certificate_id,
-      verification_status: exists && !certificate.is_revoked ? 'valid' : 'revoked',
+      verification_status: status,
       blockchain_verification: true
     });
 
@@ -126,9 +162,54 @@ exports.revokeCertificate = async (req, res) => {
 exports.listAllCertificates = async (req, res) => {
   try {
     const certificates = await Certificate.findAll({
-      include: [Student, Course, Institution]
+      include: [
+        { model: Student, include: [User] },
+        Course,
+        Institution
+      ]
     });
     res.json({ success: true, certificates });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.listStudents = async (req, res) => {
+  try {
+    const students = await Student.findAll({ include: [User] });
+    res.json({ success: true, students });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.listCourses = async (req, res) => {
+  try {
+    const courses = await Course.findAll({ include: [Institution] });
+    res.json({ success: true, courses });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.createCourse = async (req, res) => {
+  try {
+    const { courseCode, courseName, credits } = req.body;
+    const staffUser = await User.findByPk(req.user.id);
+    const institution = await Institution.findOne({ where: { wallet_address: staffUser.wallet_address } });
+    
+    if (!institution) {
+      return res.status(403).json({ success: false, message: 'User is not associated with an institution' });
+    }
+
+    const course = await Course.create({
+      course_code: courseCode,
+      course_name: courseName,
+      credits,
+      institution_id: institution.institution_id
+    });
+
+    res.status(201).json({ success: true, course });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

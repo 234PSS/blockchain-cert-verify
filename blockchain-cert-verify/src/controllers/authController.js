@@ -6,13 +6,17 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, role, walletAddress, studentNumber, enrollmentDate, department } = req.body;
     
+    if (role === 'admin') {
+      return res.status(400).json({ success: false, message: 'Admin registration is restricted' });
+    }
+    
     const hashedPassword = await bcrypt.hash(password, 10);
     
     const user = await User.create({
       name,
       email,
       password_hash: hashedPassword,
-      role,
+      role: role || 'student',
       wallet_address: walletAddress
     });
 
@@ -77,8 +81,45 @@ exports.login = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, { attributes: { exclude: ['password_hash'] } });
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ['password_hash'] },
+      include: [Student]
+    });
     res.json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.listInstitutions = async (req, res) => {
+  try {
+    const institutions = await Institution.findAll();
+    res.json({ success: true, institutions });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.verifyInstitution = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isVerified } = req.body;
+    
+    const institution = await Institution.findByPk(id);
+    if (!institution) {
+      return res.status(404).json({ success: false, message: 'Institution not found' });
+    }
+
+    await institution.update({
+      is_verified: isVerified,
+      verification_date: isVerified ? new Date() : null
+    });
+
+    const blockchainService = require('../services/blockchainService');
+    const tx = await blockchainService.contract.authorizeUniversity(institution.wallet_address, isVerified);
+    await tx.wait();
+
+    res.json({ success: true, message: 'Institution verification status updated', transactionHash: tx.hash });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
